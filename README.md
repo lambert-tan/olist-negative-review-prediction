@@ -2,7 +2,7 @@
 
 > **How early can an e-commerce platform identify an order that is likely to result in a negative customer review?**
 
-This project studies negative-review risk across the Olist order lifecycle. Instead of treating prediction as a single modeling problem, I compare two decision points: **when an order is placed** and **after it is delivered**. The comparison highlights a practical trade-off between acting early and waiting for stronger information.
+This project studies negative-review risk across the Olist order lifecycle. I compare two decision points: **when an order is placed** and **after it is delivered**. The comparison highlights a practical trade-off between acting early and waiting for stronger information.
 
 ## Results at a glance
 
@@ -15,9 +15,7 @@ This project studies negative-review risk across the Olist order lifecycle. Inst
 
 The placement model catches roughly half of eventual negative reviews, but with relatively low precision. Once fulfillment information becomes available, F1 rises from **0.318 to 0.484** and ROC-AUC from **0.677 to 0.768**. The later model is more selective, but it also leaves less time for preventive action.
 
-<p align="center">
-  <img src="assets/model_comparison.svg" width="820" alt="Placement versus delivery model performance">
-</p>
+<p align="center"><img src="assets/model_comparison.svg" width="820" alt="Placement versus delivery model performance"></p>
 
 ## Why model at two points?
 
@@ -25,63 +23,52 @@ The useful question is not simply which algorithm scores highest. The amount of 
 
 **Order placed → early risk screening → fulfillment → delivery-stage risk update → service recovery**
 
-At placement, the platform can still intervene early, but it has limited evidence about how the order will unfold. At delivery, actual delay and fulfillment information provide a stronger signal, making the model more suitable for targeted service recovery.
+At placement, the platform can still intervene early, but it has limited evidence about how the order will unfold. At delivery, actual fulfillment information provides a stronger signal, making the model more suitable for targeted service recovery.
 
-<p align="center">
-  <img src="assets/business_workflow.svg" width="900" alt="Two-stage review risk workflow">
-</p>
+<p align="center"><img src="assets/business_workflow.svg" width="900" alt="Two-stage review risk workflow"></p>
 
-## Order-level risk patterns
+## Order personas
 
-K-Means was used as an exploratory segmentation of orders. Review outcome was **not** used to fit the clusters. In the team analysis, two profiles stood out:
+For the portfolio version, I rebuilt K-Means on the same frozen **95,824-order cohort** used by the supervised models. The original seven behavioral and fulfillment variables were retained. Seventeen missing clustering inputs were median-imputed so the clustering and supervised analyses now reconcile to the same cohort.
 
-- **Long Wait** — 28.9% negative reviews, with long delivery times and frequent lateness.
-- **Multi-Item Basket** — 25.9% negative reviews despite generally arriving early.
+| Persona | Orders | Share | Negative-review rate | What distinguishes it |
+|---|---:|---:|---:|---|
+| Long Wait | 16,705 | 17.4% | **29.1%** | ~25.3 delivery days; 39.5% delivered late |
+| Multi-Item Basket | 8,306 | 8.7% | **25.9%** | ~2.5 items; high freight; generally early |
+| Big-Ticket Planner | 26,692 | 27.9% | 8.2% | higher-value, heavier orders; ~4.9 installments |
+| Quick Small Buy | 44,121 | 46.0% | 6.9% | low-value, light orders; ~8.3 delivery days |
 
-The clustering solution should be interpreted cautiously. Its silhouette score was about **0.21**, so the segments are useful descriptive profiles rather than evidence of sharply separated natural groups.
+Review outcome was **not** used to fit the clusters. The silhouette score is about **0.204**, so these should be read as useful descriptive profiles rather than sharply separated natural customer types.
 
-<p align="center">
-  <img src="assets/persona_risk.svg" width="820" alt="Negative review rate across order personas">
-</p>
-
-> **Reproducibility note:** the original clustering artifact was produced from a slightly different intermediate dataset version than the final 95,824-order supervised-learning cohort. I therefore do not present the cluster counts in this repository as if they reconcile exactly with the final modeling sample. A clean rebuild should rerun clustering from the frozen master dataset.
+<p align="center"><img src="assets/persona_risk.svg" width="820" alt="Negative review rate across order personas"></p>
 
 ## Final delivery model
 
-CatBoost produced the strongest delivery-stage result in the analysis. The leading predictive features were:
+CatBoost produced the strongest delivery-stage result. The leading predictive features were `late_days`, `delivery_vs_estimate_days`, `n_items`, and `delivery_time_days`.
 
-1. `late_days`
-2. `delivery_vs_estimate_days`
-3. `n_items`
-4. `delivery_time_days`
+These are **predictive associations, not causal effects**. Feature importance does not show that changing one variable would directly change a customer's review.
 
-These are **predictive associations, not causal effects**. In particular, feature importance does not show that changing one variable would directly change a customer's review.
+<p align="center"><img src="assets/feature_importance.svg" width="820" alt="CatBoost feature importance"></p>
 
-<p align="center">
-  <img src="assets/feature_importance.svg" width="820" alt="CatBoost feature importance">
-</p>
+## Technical workflow
 
-## Modeling approach
+The repository now separates the project into readable technical stages:
 
-The project combines an order-level data pipeline with unsupervised and supervised learning. One-to-many source tables are aggregated before merging so that each order contributes one observation and one target. The supervised models use a shared 80/20 stratified train/test split (`random_state=42`) to make the placement-versus-delivery comparison consistent.
+1. **Data preparation** — order-level integration logic, cohort definition, target construction, feature timing, leakage checks and shared split.
+2. **Clustering** — canonical 95,824-order K-Means rebuild and persona profiling.
+3. **At-placement modeling** — Logistic Regression baseline, LightGBM, feature engineering, cross-validation and tuning logic.
+4. **At-delivery modeling** — Logistic Regression / tree benchmarks, CatBoost, feature selection, tuning and threshold logic.
+5. **Model interpretation** — held-out comparison, feature importance and error-analysis framework.
 
-The original analysis tested Logistic Regression as a baseline, LightGBM for placement-stage prediction, and CatBoost for delivery-stage prediction. Class imbalance, cross-validation, hyperparameter tuning and decision-threshold selection were considered during model development.
+The compact integrated notebook is retained as a short walkthrough, while the stage notebooks make the technical logic easier to inspect.
 
-### Leakage control
+## Leakage control
 
-The target is:
-
-`review_bad = 1` for review scores 1–2, otherwise `0` for scores 3–5.
-
-Review timestamps and review score are excluded from predictors. Delivery outcomes are also excluded from the placement model because they would not be known when the order is created. Historical reputation features require time-aware construction so that an order cannot contribute information to its own prediction.
-
-## Error analysis
-
-The delivery model performs much better when poor fulfillment creates an observable signal. However, some customers still leave 1–2 star reviews after fast or early delivery. The structured data does not directly observe product quality, packaging, whether the item matched expectations, or other reasons for dissatisfaction. These false negatives are an important boundary of the model rather than something that should be explained away by delivery variables.
+The target is `review_bad = 1` for review scores 1–2 and `0` for scores 3–5. Review timestamps and review score are excluded from predictors. Delivery outcomes are excluded from the placement model because they would not be known when the order is created. Historical reputation features are constructed chronologically so an order does not contribute its own outcome to its history.
 
 ## Business interpretation
 
-The two models serve different purposes rather than competing for a single deployment slot. The placement model is more appropriate for low-cost monitoring or early communication, while the delivery model can prioritize higher-confidence service-recovery cases.
+The two models serve different purposes rather than competing for a single deployment slot. The placement model is appropriate for low-cost monitoring or early communication; the delivery model can prioritize higher-confidence service-recovery cases.
 
 A production implementation would still need an intervention test. Predicting dissatisfaction is not the same as proving that contacting a flagged customer improves retention, review score, or economics.
 
@@ -89,21 +76,28 @@ A production implementation would still need an intervention test. Predicting di
 
 ```text
 olist-negative-review-prediction/
-├── assets/                         # portfolio visualizations
+├── assets/
 ├── notebooks/
+│   ├── 01_data_preparation.ipynb
+│   ├── 02_clustering.ipynb
+│   ├── 03_at_placement_model.ipynb
+│   ├── 04_at_delivery_model.ipynb
+│   ├── 05_model_interpretation.ipynb
 │   └── olist_negative_review_end_to_end.ipynb
-├── outputs/                        # compact model-result artifacts
+├── outputs/
 ├── data/
-│   └── README.md                   # data lineage and cohort definition
+│   └── README.md
 ├── requirements.txt
 └── README.md
 ```
 
-The notebook currently serves as a compact integrated walkthrough of the verified project outputs. It is **not presented as a raw-data-to-model reproduction** because the raw relational Olist CSV files used by the team are not committed to this repository. This distinction is intentional.
+## Reproducibility boundary
+
+The raw Olist relational CSVs and the large team-generated processed master table are not committed here. The notebooks expose the data logic and model-development workflow, but I do **not** claim that a fresh clone can reproduce the entire project from raw data without obtaining the source dataset first. Compact verified model artifacts are included for inspection.
 
 ## Limitations
 
-The analysis is restricted to delivered orders with observed reviews. Review score identifies dissatisfaction but not its cause. The clustering artifacts and supervised-learning artifacts were produced at different points in the team workflow and should not be treated as one perfectly versioned pipeline. The final CatBoost tuning search was also limited. Future work would freeze a single raw-to-processed data version, rerun all segmentation and models from it, and test whether model-driven interventions produce measurable business value.
+The analysis is restricted to delivered orders with observed reviews. Review score identifies dissatisfaction but not its cause. Feature importance is not causal. The final CatBoost tuning search was limited, and the placement and delivery results retained here come from the verified held-out prediction artifacts. Future work would package the raw-data build into reusable source modules and test whether model-driven interventions create measurable business value.
 
 ## Tools
 
