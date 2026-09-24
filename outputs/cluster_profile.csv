@@ -1,5 +1,5 @@
-cluster,size,share,bad_review_rate,avg_total_price,avg_total_freight,avg_product_weight_g,avg_delivery_time_days,avg_delivery_vs_estimate_days,avg_n_payment_installments,avg_n_items
-0,26460,0.2762,0.082,160.0,23.0,2438.0,12.0,-11.0,4.2,1.1
-1,44145,0.4607,0.069,50.0,14.0,350.0,8.0,-13.0,1.8,1.0
-2,16870,0.1761,0.289,85.0,19.0,1117.0,22.0,1.5,2.5,1.0
-3,8324,0.0869,0.259,105.0,31.0,1340.0,10.0,-13.0,2.6,2.5
+cluster,persona,size,share,bad_review_rate,late_rate,median_total_price,median_total_freight,median_product_weight_g,avg_delivery_time_days,avg_delivery_vs_estimate_days,avg_installments,avg_n_items
+0,Long Wait,16705,0.174330,0.291170,0.394612,79.9,17.77,700.0,25.2887,0.5912,2.3552,1.0255
+1,Multi-Item Basket,8306,0.086680,0.259331,0.031543,147.8,36.06,850.0,11.3398,-13.5366,3.6734,2.4822
+2,Big-Ticket Planner,26692,0.278552,0.081972,0.016484,159.9,22.76,2600.0,11.7827,-14.4505,4.8961,1.0021
+3,Quick Small Buy,44121,0.460438,0.069491,0.008318,49.9,14.17,350.0,8.3467,-13.2910,1.8090,1.0169
