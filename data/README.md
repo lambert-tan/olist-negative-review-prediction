@@ -1,16 +1,53 @@
-# Data
+# Data and Reproducibility
 
-This repository does not commit the full processed Olist order-level dataset.
+The project is based on the public **Olist Brazilian E-Commerce** data. The full raw relational dataset and the team-generated processed master table are not committed to this portfolio repository.
 
-The project uses the public **Olist Brazilian E-Commerce** data and constructs an order-level modeling table. One-to-many tables such as order items and payments are aggregated before merging so that each order contributes one observation and one target.
+## Unit of analysis
 
-The final supervised-learning cohort contains **95,824 delivered orders** with an observed review and the timing information required for the placement-versus-delivery comparison.
+The supervised-learning unit is **one order**. One-to-many source tables such as order items and payments are aggregated before merging so that an order contributes one observation and one target.
 
-Target definition:
+## Target
 
 - `review_bad = 1` for review scores 1–2
 - `review_bad = 0` for review scores 3–5
 
-Negative reviews account for approximately **12.8%** of the final sample.
+The frozen supervised-learning cohort contains **95,824 delivered orders**, including **12,272 negative reviews (12.8%)**.
 
-The full processed dataset is excluded from GitHub to keep the repository lightweight and to avoid presenting a team-generated intermediate file as the sole reproducibility source.
+## Shared split
+
+The placement and delivery models use the same split:
+
+- Train: **76,659 orders**
+- Test: **19,165 orders**
+- Split: 80/20, stratified by `review_bad`
+- `random_state=42`
+
+Keeping the cohort and held-out sample fixed makes the two prediction stages directly comparable.
+
+## Data flow
+
+```text
+Olist relational tables
+        ↓
+aggregate one-to-many tables
+        ↓
+merge to one row per order
+        ↓
+feature engineering + leakage checks
+        ↓
+95,824-order supervised master table
+        ↓
+shared stratified train/test split
+        ↓
+placement model      delivery model
+```
+
+## Feature timing
+
+Placement-stage features are restricted to information available when an order is created. Delivery-stage modeling adds observed fulfillment information such as delivery duration and performance relative to the estimated date.
+
+Review score and review timestamps are never predictors. Historical reputation variables should be constructed chronologically so that an order does not contribute information to its own features.
+
+## Version note
+
+The clustering work in the original team workflow used a slightly different intermediate dataset version. For that reason, the saved clustering profile in this repository should be treated as an exploratory artifact and its cluster counts should **not** be expected to sum to the final 95,824-order supervised cohort. A fully reproducible rebuild would rerun clustering from the frozen master table.
