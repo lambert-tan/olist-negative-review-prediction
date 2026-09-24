@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="430" viewBox="0 0 900 430">
+<rect width="900" height="430" fill="white"/><style>text{font-family:Arial,sans-serif;fill:#222}.t{font-size:25px;font-weight:700}.l{font-size:16px}.s{font-size:14px}.v{font-size:14px;font-weight:700}</style>
+<text x="450" y="38" text-anchor="middle" class="t">Predictive Performance by Decision Stage</text>
+<line x1="110" y1="350" x2="850" y2="350" stroke="#555"/><line x1="110" y1="70" x2="110" y2="350" stroke="#555"/>
+<g class="s"><text x="95" y="355" text-anchor="end">0.0</text><text x="95" y="285" text-anchor="end">0.2</text><text x="95" y="215" text-anchor="end">0.4</text><text x="95" y="145" text-anchor="end">0.6</text><text x="95" y="75" text-anchor="end">0.8</text></g>
+<g fill="#6c757d"><rect x="185" y="269" width="55" height="81"/><rect x="500" y="170" width="55" height="180"/></g>
+<g fill="#adb5bd"><rect x="245" y="171" width="55" height="179"/><rect x="560" y="190" width="55" height="160"/></g>
+<g fill="#495057"><rect x="305" y="239" width="55" height="111"/><rect x="620" y="181" width="55" height="169"/></g>
+<g fill="#212529"><rect x="365" y="113" width="55" height="237"/><rect x="680" y="81" width="55" height="269"/></g>
+<text x="303" y="385" text-anchor="middle" class="l">At Placement</text><text x="618" y="385" text-anchor="middle" class="l">At Delivery</text>
+<g class="v"><text x="212" y="260" text-anchor="middle">.231</text><text x="272" y="162" text-anchor="middle">.511</text><text x="332" y="230" text-anchor="middle">.318</text><text x="392" y="104" text-anchor="middle">.677</text><text x="527" y="161" text-anchor="middle">.515</text><text x="587" y="181" text-anchor="middle">.457</text><text x="647" y="172" text-anchor="middle">.484</text><text x="707" y="72" text-anchor="middle">.768</text></g>
+<g class="s"><rect x="250" y="405" width="12" height="12" fill="#6c757d"/><text x="268" y="416">Precision</text><rect x="345" y="405" width="12" height="12" fill="#adb5bd"/><text x="363" y="416">Recall</text><rect x="425" y="405" width="12" height="12" fill="#495057"/><text x="443" y="416">F1</text><rect x="485" y="405" width="12" height="12" fill="#212529"/><text x="503" y="416">ROC-AUC</text></g></svg>
