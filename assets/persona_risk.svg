@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="430"><rect width="900" height="430" fill="white"/><style>text{font-family:Arial,sans-serif;fill:#222}.t{font-size:25px;font-weight:700}.l{font-size:16px}.v{font-size:15px;font-weight:700}</style><text x="450" y="38" text-anchor="middle" class="t">Negative-Review Risk Across Order Personas</text>
+<g class="l"><text x="190" y="105" text-anchor="end">Long Wait</text><text x="190" y="175" text-anchor="end">Multi-Item Basket</text><text x="190" y="245" text-anchor="end">Big-Ticket Planner</text><text x="190" y="315" text-anchor="end">Quick Small Buy</text></g>
+<g fill="#495057"><rect x="210" y="78" width="578" height="38"/><rect x="210" y="148" width="518" height="38"/><rect x="210" y="218" width="164" height="38"/><rect x="210" y="288" width="138" height="38"/></g>
+<line x1="466" y1="65" x2="466" y2="340" stroke="#777" stroke-dasharray="7 5"/><text x="472" y="360" class="l">Overall: 12.8%</text>
+<g class="v"><text x="800" y="103">28.9%</text><text x="740" y="173">25.9%</text><text x="386" y="243">8.2%</text><text x="360" y="313">6.9%</text></g></svg>
