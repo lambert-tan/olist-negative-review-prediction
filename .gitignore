@@ -1,0 +1,23 @@
+# Data
+data/*.csv
+data/raw/
+data/processed/
+
+# Model artifacts
+*.pkl
+*.joblib
+*.cbm
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
