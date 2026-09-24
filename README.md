@@ -22,6 +22,10 @@ The final modeling sample contains **95,824 delivered orders**, with a **12.8% n
 
 Moving from placement to delivery increased F1 from **0.318 to 0.484** and ROC-AUC from **0.677 to 0.768**. The strongest delivery-stage signals were lateness relative to the promised date, total delivery time, and order size.
 
+<p align="center">
+  <img src="assets/model_comparison.svg" width="820" alt="Placement versus delivery model performance">
+</p>
+
 ## What I found
 
 ### 1. Delivery performance matters, but it is not the whole story
@@ -33,13 +37,25 @@ K-Means identified four order personas. Two groups had particularly high negativ
 
 This suggests that dissatisfaction is not explained by a single mechanism.
 
+<p align="center">
+  <img src="assets/persona_risk.svg" width="820" alt="Negative review rate across order personas">
+</p>
+
 ### 2. Earlier prediction trades accuracy for actionability
 
 The placement model captures about half of eventual negative reviews, but precision is relatively low. It can support low-cost monitoring or proactive communication while there is still time to intervene.
 
 The delivery model has substantially stronger discrimination and precision, making it more useful for targeted service recovery.
 
-### 3. Error cases reveal missing information
+### 3. What drives the final model?
+
+Delivery performance dominates the final CatBoost model, particularly lateness relative to the promised date. Order complexity also remains important.
+
+<p align="center">
+  <img src="assets/feature_importance.svg" width="820" alt="CatBoost feature importance">
+</p>
+
+### 4. Error cases reveal missing information
 
 Some 1–2 star reviews occur even when delivery is early and fast. The available structured data cannot directly observe product quality, packaging, item accuracy, or customer expectations. These cases define an important limit of the model.
 
@@ -78,6 +94,8 @@ Some 1–2 star reviews occur even when delivery is early and fast. The availabl
 
 ```text
 olist-negative-review-prediction/
+├── assets/
+│   └── portfolio visualizations
 ├── notebooks/
 │   └── olist_negative_review_end_to_end.ipynb
 ├── outputs/
@@ -100,6 +118,10 @@ A practical implementation would use a two-stage workflow:
 **Order placed → early risk screening → fulfillment monitoring → delivery-stage risk update → targeted service recovery**
 
 The placement model is suited to inexpensive preventive actions. The delivery model can prioritize higher-confidence cases once stronger operational evidence becomes available.
+
+<p align="center">
+  <img src="assets/business_workflow.svg" width="900" alt="Two-stage review risk workflow">
+</p>
 
 ## Limitations
 
