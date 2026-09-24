@@ -1,0 +1,5 @@
+cluster,size,share,bad_review_rate,avg_total_price,avg_total_freight,avg_product_weight_g,avg_delivery_time_days,avg_delivery_vs_estimate_days,avg_n_payment_installments,avg_n_items
+0,26460,0.2762,0.082,160.0,23.0,2438.0,12.0,-11.0,4.2,1.1
+1,44145,0.4607,0.069,50.0,14.0,350.0,8.0,-13.0,1.8,1.0
+2,16870,0.1761,0.289,85.0,19.0,1117.0,22.0,1.5,2.5,1.0
+3,8324,0.0869,0.259,105.0,31.0,1340.0,10.0,-13.0,2.6,2.5
