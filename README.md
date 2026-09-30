@@ -2,7 +2,9 @@
 
 > **How early can an e-commerce platform identify an order that is likely to result in a negative customer review?**
 
-This project studies negative-review risk across the Olist order lifecycle. I compare two decision points: **when an order is placed** and **after it is delivered**. The comparison highlights a practical trade-off between acting early and waiting for stronger information.
+**Python · LightGBM · CatBoost · Clustering · Customer Analytics**
+
+This project models negative-review risk at two points in the order lifecycle: **when an order is placed** and **after it is delivered**. The goal is not only to improve predictive performance, but to understand when a prediction becomes useful enough for the business to act on.
 
 ## Results at a glance
 
@@ -13,23 +15,31 @@ This project studies negative-review risk across the Olist order lifecycle. I co
 | At placement | LightGBM | 0.231 | **0.511** | 0.318 | 0.677 |
 | At delivery | CatBoost | **0.515** | 0.457 | **0.484** | **0.768** |
 
-The placement model catches roughly half of eventual negative reviews, but with relatively low precision. Once fulfillment information becomes available, F1 rises from **0.318 to 0.484** and ROC-AUC from **0.677 to 0.768**. The later model is more selective, but it also leaves less time for preventive action.
+- The **placement model** identifies about half of eventual negative reviews, but produces more false positives.
+- The **delivery model** is more selective and substantially stronger on F1 and ROC-AUC.
+- The trade-off is operational: earlier predictions create more time to intervene, while later predictions are more reliable.
 
 <p align="center"><img src="assets/model_comparison.svg" width="820" alt="Placement versus delivery model performance"></p>
 
-## Why model at two points?
+## Business decision
 
-The useful question is not simply which algorithm scores highest. The amount of information available changes as an order moves through fulfillment.
+The two models are useful for different actions rather than competing for one deployment slot.
+
+**At order placement:** use lower-confidence risk scores for inexpensive actions such as monitoring, proactive communication, or prioritizing orders for closer follow-up.
+
+**After delivery:** use the stronger CatBoost score to prioritize higher-confidence service-recovery cases where outreach is more costly and should be targeted.
+
+The practical decision is therefore:
 
 **Order placed → early risk screening → fulfillment → delivery-stage risk update → service recovery**
 
-At placement, the platform can still intervene early, but it has limited evidence about how the order will unfold. At delivery, actual fulfillment information provides a stronger signal, making the model more suitable for targeted service recovery.
-
 <p align="center"><img src="assets/business_workflow.svg" width="900" alt="Two-stage review risk workflow"></p>
 
-## Order personas
+A production rollout would still need an intervention experiment. Predicting dissatisfaction does not prove that contacting a flagged customer improves retention, review score, or economics.
 
-For the portfolio version, I rebuilt K-Means on the same frozen **95,824-order cohort** used by the supervised models. The original seven behavioral and fulfillment variables were retained. Seventeen missing clustering inputs were median-imputed so the clustering and supervised analyses now reconcile to the same cohort.
+## Customer personas
+
+I rebuilt K-Means on the same frozen **95,824-order cohort** used by the supervised models so the descriptive and predictive analyses reconcile to one population.
 
 | Persona | Orders | Share | Negative-review rate | What distinguishes it |
 |---|---:|---:|---:|---|
@@ -38,39 +48,43 @@ For the portfolio version, I rebuilt K-Means on the same frozen **95,824-order c
 | Big-Ticket Planner | 26,692 | 27.9% | 8.2% | higher-value, heavier orders; ~4.9 installments |
 | Quick Small Buy | 44,121 | 46.0% | 6.9% | low-value, light orders; ~8.3 delivery days |
 
-Review outcome was **not** used to fit the clusters. The silhouette score is about **0.204**, so these should be read as useful descriptive profiles rather than sharply separated natural customer types.
+Review outcome was **not** used to fit the clusters. The silhouette score is approximately **0.204**, so the personas are best interpreted as descriptive operating profiles rather than sharply separated natural customer types.
 
 <p align="center"><img src="assets/persona_risk.svg" width="820" alt="Negative review rate across order personas"></p>
 
-## Final delivery model
+## Final delivery-stage model
 
-CatBoost produced the strongest delivery-stage result. The leading predictive features were `late_days`, `delivery_vs_estimate_days`, `n_items`, and `delivery_time_days`.
+CatBoost produced the strongest delivery-stage result. The leading predictive features were:
 
-These are **predictive associations, not causal effects**. Feature importance does not show that changing one variable would directly change a customer's review.
+- `late_days`
+- `delivery_vs_estimate_days`
+- `n_items`
+- `delivery_time_days`
 
 <p align="center"><img src="assets/feature_importance.svg" width="820" alt="CatBoost feature importance"></p>
 
-## Technical workflow
-
-The repository now separates the project into readable technical stages:
-
-1. **Data preparation** — order-level integration logic, cohort definition, target construction, feature timing, leakage checks and shared split.
-2. **Clustering** — canonical 95,824-order K-Means rebuild and persona profiling.
-3. **At-placement modeling** — Logistic Regression baseline, LightGBM, feature engineering, cross-validation and tuning logic.
-4. **At-delivery modeling** — Logistic Regression / tree benchmarks, CatBoost, feature selection, tuning and threshold logic.
-5. **Model interpretation** — held-out comparison, feature importance and error-analysis framework.
-
-The compact integrated notebook is retained as a short walkthrough, while the stage notebooks make the technical logic easier to inspect.
+These are **predictive associations, not causal effects**. Feature importance does not imply that changing one variable would directly change a customer's review.
 
 ## Leakage control
 
-The target is `review_bad = 1` for review scores 1–2 and `0` for scores 3–5. Review timestamps and review score are excluded from predictors. Delivery outcomes are excluded from the placement model because they would not be known when the order is created. Historical reputation features are constructed chronologically so an order does not contribute its own outcome to its history.
+Because the project compares predictions at different decision points, feature timing matters.
 
-## Business interpretation
+- The target is `review_bad = 1` for review scores 1–2 and `0` for scores 3–5.
+- Review score and review timestamps are excluded from predictors.
+- Delivery outcomes are excluded from the placement model because they would not be known when the order is created.
+- Historical reputation features are constructed chronologically so an order does not contribute its own outcome to its history.
 
-The two models serve different purposes rather than competing for a single deployment slot. The placement model is appropriate for low-cost monitoring or early communication; the delivery model can prioritize higher-confidence service-recovery cases.
+This makes the comparison closer to how the models could actually be used in practice.
 
-A production implementation would still need an intervention test. Predicting dissatisfaction is not the same as proving that contacting a flagged customer improves retention, review score, or economics.
+## Technical workflow
+
+1. **Data preparation** — integrate order-level data, define the cohort and target, control leakage, and create a shared train/test split.
+2. **Clustering** — rebuild K-Means personas on the same analytical cohort.
+3. **At-placement modelling** — Logistic Regression baseline, LightGBM, feature engineering, cross-validation, and tuning.
+4. **At-delivery modelling** — Logistic Regression / tree benchmarks, CatBoost, feature selection, tuning, and threshold logic.
+5. **Model interpretation** — compare held-out performance, feature importance, and model errors.
+
+The compact end-to-end notebook is retained as a walkthrough, while the stage notebooks make the technical logic easier to inspect.
 
 ## Repository guide
 
@@ -93,11 +107,15 @@ olist-negative-review-prediction/
 
 ## Reproducibility boundary
 
-The raw Olist relational CSVs and the large team-generated processed master table are not committed here. The notebooks expose the data logic and model-development workflow, but I do **not** claim that a fresh clone can reproduce the entire project from raw data without obtaining the source dataset first. Compact verified model artifacts are included for inspection.
+The raw Olist relational CSVs and the large team-generated processed master table are not committed here. The notebooks expose the data logic and model-development workflow, but a fresh clone still requires the source dataset to reproduce the project end to end.
+
+Compact verified model artifacts are included for inspection.
 
 ## Limitations
 
-The analysis is restricted to delivered orders with observed reviews. Review score identifies dissatisfaction but not its cause. Feature importance is not causal. The final CatBoost tuning search was limited, and the placement and delivery results retained here come from the verified held-out prediction artifacts. Future work would package the raw-data build into reusable source modules and test whether model-driven interventions create measurable business value.
+The analysis is restricted to delivered orders with observed reviews. Review score identifies dissatisfaction but not its cause. Feature importance is not causal, and the final CatBoost tuning search was limited.
+
+A stronger production version would package the raw-data build into reusable source modules, calibrate intervention thresholds against business cost, and test whether model-driven outreach creates measurable incremental value.
 
 ## Tools
 
