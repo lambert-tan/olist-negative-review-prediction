@@ -4,7 +4,7 @@
 
 **Python · LightGBM · CatBoost · Clustering · Customer Analytics**
 
-This project models negative-review risk at two points in the order lifecycle: **when an order is placed** and **after it is delivered**. The goal is not only to improve predictive performance, but to understand when a prediction becomes useful enough for the business to act on.
+This project estimates negative-review risk at two points in the order lifecycle: **when an order is placed** and **after it is delivered**. Comparing the two stages shows how predictive performance changes as more fulfillment information becomes available.
 
 ## Results at a glance
 
@@ -16,30 +16,28 @@ This project models negative-review risk at two points in the order lifecycle: *
 | At delivery | CatBoost | **0.515** | 0.457 | **0.484** | **0.768** |
 
 - The **placement model** identifies about half of eventual negative reviews, but produces more false positives.
-- The **delivery model** is more selective and substantially stronger on F1 and ROC-AUC.
-- The trade-off is operational: earlier predictions create more time to intervene, while later predictions are more reliable.
+- The **delivery model** is more selective and performs better on F1 and ROC-AUC.
+- Earlier predictions give the business more time to respond; later predictions provide a stronger risk signal.
 
 <p align="center"><img src="assets/model_comparison.svg" width="820" alt="Placement versus delivery model performance"></p>
 
-## Business decision
+## Business use
 
-The two models are useful for different actions rather than competing for one deployment slot.
+The placement and delivery models serve different purposes.
 
-**At order placement:** use lower-confidence risk scores for inexpensive actions such as monitoring, proactive communication, or prioritizing orders for closer follow-up.
+**At order placement:** the risk score can support lower-cost actions such as monitoring, proactive communication, or closer follow-up.
 
-**After delivery:** use the stronger CatBoost score to prioritize higher-confidence service-recovery cases where outreach is more costly and should be targeted.
-
-The practical decision is therefore:
+**After delivery:** the CatBoost score can be used to prioritize higher-confidence service-recovery cases.
 
 **Order placed → early risk screening → fulfillment → delivery-stage risk update → service recovery**
 
 <p align="center"><img src="assets/business_workflow.svg" width="900" alt="Two-stage review risk workflow"></p>
 
-A production rollout would still need an intervention experiment. Predicting dissatisfaction does not prove that contacting a flagged customer improves retention, review score, or economics.
+A production rollout would still require an intervention experiment. Predicting dissatisfaction does not show that contacting a flagged customer will improve retention, review score, or economics.
 
 ## Customer personas
 
-I rebuilt K-Means on the same frozen **95,824-order cohort** used by the supervised models so the descriptive and predictive analyses reconcile to one population.
+I rebuilt K-Means on the same frozen **95,824-order cohort** used by the supervised models so the descriptive and predictive analyses use the same population.
 
 | Persona | Orders | Share | Negative-review rate | What distinguishes it |
 |---|---:|---:|---:|---|
@@ -48,7 +46,7 @@ I rebuilt K-Means on the same frozen **95,824-order cohort** used by the supervi
 | Big-Ticket Planner | 26,692 | 27.9% | 8.2% | higher-value, heavier orders; ~4.9 installments |
 | Quick Small Buy | 44,121 | 46.0% | 6.9% | low-value, light orders; ~8.3 delivery days |
 
-Review outcome was **not** used to fit the clusters. The silhouette score is approximately **0.204**, so the personas are best interpreted as descriptive operating profiles rather than sharply separated natural customer types.
+Review outcome was **not** used to fit the clusters. The silhouette score is approximately **0.204**, so the personas are better treated as descriptive profiles than as sharply separated customer groups.
 
 <p align="center"><img src="assets/persona_risk.svg" width="820" alt="Negative review rate across order personas"></p>
 
@@ -67,14 +65,12 @@ These are **predictive associations, not causal effects**. Feature importance do
 
 ## Leakage control
 
-Because the project compares predictions at different decision points, feature timing matters.
+Feature timing matters because the project compares models at different decision points.
 
 - The target is `review_bad = 1` for review scores 1–2 and `0` for scores 3–5.
 - Review score and review timestamps are excluded from predictors.
-- Delivery outcomes are excluded from the placement model because they would not be known when the order is created.
+- Delivery outcomes are excluded from the placement model because they are not known when the order is created.
 - Historical reputation features are constructed chronologically so an order does not contribute its own outcome to its history.
-
-This makes the comparison closer to how the models could actually be used in practice.
 
 ## Technical workflow
 
@@ -84,7 +80,7 @@ This makes the comparison closer to how the models could actually be used in pra
 4. **At-delivery modelling** — Logistic Regression / tree benchmarks, CatBoost, feature selection, tuning, and threshold logic.
 5. **Model interpretation** — compare held-out performance, feature importance, and model errors.
 
-The compact end-to-end notebook is retained as a walkthrough, while the stage notebooks make the technical logic easier to inspect.
+The compact end-to-end notebook provides a short walkthrough, while the stage notebooks separate the main modelling steps.
 
 ## Repository guide
 
@@ -107,7 +103,7 @@ olist-negative-review-prediction/
 
 ## Reproducibility boundary
 
-The raw Olist relational CSVs and the large team-generated processed master table are not committed here. The notebooks expose the data logic and model-development workflow, but a fresh clone still requires the source dataset to reproduce the project end to end.
+The raw Olist relational CSVs and the large team-generated processed master table are not committed here. The notebooks document the data logic and model-development workflow, but the source dataset is still required to reproduce the project end to end.
 
 Compact verified model artifacts are included for inspection.
 
@@ -115,7 +111,7 @@ Compact verified model artifacts are included for inspection.
 
 The analysis is restricted to delivered orders with observed reviews. Review score identifies dissatisfaction but not its cause. Feature importance is not causal, and the final CatBoost tuning search was limited.
 
-A stronger production version would package the raw-data build into reusable source modules, calibrate intervention thresholds against business cost, and test whether model-driven outreach creates measurable incremental value.
+Further work could package the raw-data build into reusable source modules, calibrate intervention thresholds against business cost, and test whether model-driven outreach creates measurable incremental value.
 
 ## Tools
 
