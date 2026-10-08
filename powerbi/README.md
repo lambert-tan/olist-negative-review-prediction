@@ -20,6 +20,9 @@ The export includes:
 - placement-model score
 - delivery-model score
 - model-based risk band
+- delivery-risk rank and percentile
+- top 5%, top 10% and top 20% risk flags
+- service-priority label for the recovery queue
 
 ## Planned pages
 
@@ -44,6 +47,8 @@ The export includes:
 
 - Order ID
 - Delivery Risk Probability
+- Delivery Risk Rank
+- Service Priority
 - Risk Band
 - Late Days
 - Delivery Time
@@ -54,6 +59,8 @@ The export includes:
 
 The queue should be sorted by delivery-model probability so it functions as a prioritization tool.
 
+A capacity view can use the top-risk flags or a What-if parameter to show how review capacity changes the share of negative reviews captured. The Python analysis already provides benchmark points at 5%, 10% and 20% capacity.
+
 ## Power BI skills shown
 
 - Power Query for data typing and light transformation
@@ -61,6 +68,7 @@ The queue should be sorted by delivery-model probability so it functions as a pr
 - relationships and model design
 - DAX measures
 - slicers and filter context
+- What-if parameter for service capacity
 - drill-through / tooltips
 - conditional formatting
 - operational dashboard design
