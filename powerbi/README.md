@@ -1,55 +1,68 @@
 # Power BI Dashboard
 
-This is the business-facing deployment layer of my Olist customer review risk project. I keep the Power BI report downstream of the Python workflow so the dashboard does not recreate data engineering or model logic in a second place.
+The Power BI report is the final project step. It uses one curated export from the Python workflow and does not repeat the raw-data joins or model training.
 
 ## Data source
 
-Power BI reads only:
+Use:
 
 `data/powerbi/powerbi_order_risk.csv`
 
-I generate that file with `notebooks/06_powerbi_export.ipynb` after the canonical processed master table is available locally.
+Generate the file by running notebooks 02–04 first, then notebook 06.
 
-## Report design
+The export includes:
+
+- order and purchase fields
+- geography and product category
+- order value and delivery performance
+- persona
+- actual review outcome
+- placement-model score
+- delivery-model score
+- model-based risk band
+
+## Planned pages
 
 ### 1. Executive Risk Overview
+
 - Total Orders
 - Negative Review Rate
 - Late Delivery Rate
 - Average Delivery Time
-- Negative Review Rate by month, state, category and persona
+- monthly trend
+- state, category and persona breakdowns
 
 ### 2. Risk Drivers
-- Negative Review Rate by late-days band
-- Delivery delay versus negative-review rate
-- Product-category comparison
-- State comparison
-- Persona comparison
-- CatBoost feature importance as model context
+
+- negative-review rate by delivery delay
+- order-value and order-complexity views
+- state and category comparisons
+- persona comparison
+- CatBoost feature-importance reference
 
 ### 3. Customer Recovery Queue
-Once I persist order-level model probabilities, this page will show:
+
 - Order ID
-- Delivery risk probability
-- Risk band
-- Late days
-- Delivery time
-- Order value
+- Delivery Risk Probability
+- Risk Band
+- Late Days
+- Delivery Time
+- Order Value
 - Category
 - State
 - Persona
 
-The queue should be sorted by model risk descending so the report supports prioritization rather than serving as a decorative dashboard.
+The queue should be sorted by delivery-model probability so it functions as a prioritization tool.
 
-## Power BI skills demonstrated
+## Power BI skills shown
 
-- Power Query data typing and light transformation
-- Explicit Date table
-- Relationships / model design
+- Power Query for data typing and light transformation
+- explicit Date table
+- relationships and model design
 - DAX measures
-- Filter context and slicers
-- Drill-through and tooltips
-- Conditional formatting
-- Business-oriented dashboard design
+- slicers and filter context
+- drill-through / tooltips
+- conditional formatting
+- operational dashboard design
 
-The final `.pbix` file and dashboard screenshot will live in this folder / `assets/` once the report is complete.
+The `.pbix` file and dashboard screenshot will be added after the report is complete.
