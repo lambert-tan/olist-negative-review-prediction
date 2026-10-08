@@ -1,8 +1,8 @@
-pandas
-numpy
-matplotlib
-scikit-learn
-lightgbm
-catboost
-optuna
-jupyter
+pandas==2.2.3
+numpy==2.3.5
+matplotlib==3.10.8
+scikit-learn==1.8.0
+lightgbm==4.6.0
+catboost==1.2.8
+optuna==4.8.0
+jupyter-core==5.9.1
