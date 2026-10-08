@@ -1,0 +1,2 @@
+placement_fp,placement_fn,delivery_fp,delivery_fn,break_even_fn_to_fp_cost_ratio,interpretation
+4148,1294,816,1396,32.666666666666664,Placement becomes lower-cost only when one false negative costs more than this many false positives under the normalized two-error cost model.
