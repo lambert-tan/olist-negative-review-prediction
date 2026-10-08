@@ -1,10 +1,13 @@
 # Processed Data
 
-Place the canonical analytical files here when running the project locally:
+Notebook `01_data_join_and_clean.ipynb` creates the main processed files used by the project:
 
 - `master_orders_clean_v2.csv`
 - `shared_train_test_split.csv`
 - `data_quality_audit_v2.csv`
-- `feature_availability_matrix_v2.csv`
 
-All downstream notebooks read from this folder. Do not keep duplicate working copies in `outputs/`, the repository root, or the Power BI folder.
+`master_orders_clean_v2.csv` is the canonical downstream input for clustering, modeling, interpretation and the Power BI export.
+
+Optional documentation files can also be stored here, but the downstream notebooks do not depend on them.
+
+Do not keep duplicate working copies of the processed data in `outputs/`, the repository root or the Power BI folder.
