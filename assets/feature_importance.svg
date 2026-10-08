@@ -1,4 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500"><rect width="900" height="500" fill="white"/><style>text{font-family:Arial,sans-serif;fill:#222}.t{font-size:25px;font-weight:700}.l{font-size:14px}.v{font-size:13px;font-weight:700}</style><text x="450" y="36" text-anchor="middle" class="t">Leading Predictive Features in the At-Delivery Model</text>
-<g class="l"><text x="250" y="90" text-anchor="end">late_days</text><text x="250" y="130" text-anchor="end">delivery_vs_estimate_days</text><text x="250" y="170" text-anchor="end">n_items</text><text x="250" y="210" text-anchor="end">delivery_time_days</text><text x="250" y="250" text-anchor="end">primary_seller_city</text><text x="250" y="290" text-anchor="end">primary_product_category</text><text x="250" y="330" text-anchor="end">carrier_pickup_delay_days</text><text x="250" y="370" text-anchor="end">customer_city</text><text x="250" y="410" text-anchor="end">max_product_volume_cm3</text><text x="250" y="450" text-anchor="end">shipping_transit_days</text></g>
-<g fill="#495057"><rect x="270" y="72" width="540" height="25"/><rect x="270" y="112" width="403" height="25"/><rect x="270" y="152" width="347" height="25"/><rect x="270" y="192" width="298" height="25"/><rect x="270" y="232" width="166" height="25"/><rect x="270" y="272" width="145" height="25"/><rect x="270" y="312" width="128" height="25"/><rect x="270" y="352" width="125" height="25"/><rect x="270" y="392" width="114" height="25"/><rect x="270" y="432" width="108" height="25"/></g>
-<g class="v"><text x="818" y="91">15.45</text><text x="681" y="131">11.53</text><text x="625" y="171">9.93</text><text x="576" y="211">8.53</text><text x="444" y="251">4.74</text><text x="423" y="291">4.15</text><text x="406" y="331">3.65</text><text x="403" y="371">3.57</text><text x="392" y="411">3.25</text><text x="386" y="451">3.10</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="520" viewBox="0 0 980 520">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#222}.t{font-size:25px;font-weight:700}.l{font-size:14px}.v{font-size:13px;font-weight:700}</style>
+<text x="490" y="36" text-anchor="middle" class="t">Leading Predictive Features in the At-Delivery Model</text>
+<text x="282" y="90" text-anchor="end" class="l">late_days</text>
+<rect x="300" y="72" width="560.0" height="25" fill="#495057"/>
+<text x="868.0" y="90" class="v">16.76</text>
+<text x="282" y="132" text-anchor="end" class="l">delivery_vs_estimate_days</text>
+<rect x="300" y="114" width="515.3" height="25" fill="#495057"/>
+<text x="823.3" y="132" class="v">15.42</text>
+<text x="282" y="174" text-anchor="end" class="l">n_items</text>
+<rect x="300" y="156" width="374.4" height="25" fill="#495057"/>
+<text x="682.4" y="174" class="v">11.20</text>
+<text x="282" y="216" text-anchor="end" class="l">delivery_time_days</text>
+<rect x="300" y="198" width="236.8" height="25" fill="#495057"/>
+<text x="544.8" y="216" class="v">7.09</text>
+<text x="282" y="258" text-anchor="end" class="l">primary_product_category</text>
+<rect x="300" y="240" width="156.7" height="25" fill="#495057"/>
+<text x="464.7" y="258" class="v">4.69</text>
+<text x="282" y="300" text-anchor="end" class="l">primary_seller_city</text>
+<rect x="300" y="282" width="138.2" height="25" fill="#495057"/>
+<text x="446.2" y="300" class="v">4.14</text>
+<text x="282" y="342" text-anchor="end" class="l">carrier_pickup_delay_days</text>
+<rect x="300" y="324" width="123.9" height="25" fill="#495057"/>
+<text x="431.9" y="342" class="v">3.71</text>
+<text x="282" y="384" text-anchor="end" class="l">customer_city</text>
+<rect x="300" y="366" width="95.9" height="25" fill="#495057"/>
+<text x="403.9" y="384" class="v">2.87</text>
+<text x="282" y="426" text-anchor="end" class="l">n_distinct_sellers</text>
+<rect x="300" y="408" width="93.5" height="25" fill="#495057"/>
+<text x="401.5" y="426" class="v">2.80</text>
+<text x="282" y="468" text-anchor="end" class="l">promised_delivery_days</text>
+<rect x="300" y="450" width="78.5" height="25" fill="#495057"/>
+<text x="386.5" y="468" class="v">2.35</text>
+</svg>
