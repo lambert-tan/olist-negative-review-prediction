@@ -33,6 +33,14 @@ The top 10% group has a negative-review rate of about **55.9%**, compared with 1
 
 This makes the score suitable for testing a capacity-constrained service-recovery workflow, where only a limited number of orders can be reviewed or contacted.
 
+## Decision policy
+
+I also look at the model as a queueing and decision problem instead of treating one classification threshold as the only output. On the held-out test set, reviewing the highest-risk 5% of orders captures about 29.8% of negative reviews; expanding capacity to 10% raises capture to 43.6%. The marginal gain then starts to flatten as lower-risk cases enter the queue.
+
+To make the early-versus-late trade-off explicit, I use a normalized error-cost sensitivity analysis. I set the cost of one false positive to 1 unit and vary the relative cost of a false negative. At the validation-selected thresholds, the placement model produces more false positives but slightly fewer false negatives. The break-even point is about **32.7:1**: only above that false-negative/false-positive cost ratio does the placement-stage policy become cheaper than the delivery-stage policy.
+
+I keep this in normalized units because the dataset does not contain Olist's actual service, retention, or reputation costs. The purpose is to show what economic assumption would be required to justify earlier intervention, not to invent a monetary ROI.
+
 ## Business workflow
 
 I use the two model stages differently:
@@ -59,6 +67,12 @@ K-Means is used on the same 95,824-order cohort to provide a descriptive view of
 Review outcome is not used to fit the clusters. The silhouette score is about **0.204**, so I use these as descriptive profiles rather than sharply separated natural groups.
 
 <p align="center"><img src="assets/persona_risk.svg" width="820" alt="Negative review rate across order personas"></p>
+
+## Clustering robustness
+
+I use DBSCAN as a second clustering check because it does not require the number of groups to be fixed in advance. Using the same standardized clustering variables, `eps=1.0` and `min_samples=20` produce a large core cluster plus smaller groups and about **3.6% noise**. Agreement with the four K-Means personas is low (ARI ≈ **0.159**).
+
+The disagreement is useful. The DBSCAN noise group has a negative-review rate of about **32.9%**, which makes it a useful outlier signal, but the density-based solution is much harder to translate into a small set of stable business personas. I therefore keep K-Means for segmentation and treat DBSCAN as an outlier-oriented robustness check.
 
 ## Final delivery-stage model
 
@@ -90,8 +104,9 @@ Because the positive class is imbalanced, I report **PR-AUC** in addition to ROC
 3. **Clustering** — create four descriptive order personas.
 4. **At-placement modeling** — run a small LightGBM validation search and save test-set scores.
 5. **At-delivery modeling** — run a small CatBoost validation search, save scores and feature importance.
-6. **Interpretation** — compare model stages and evaluate lift / capture rate.
-7. **Power BI export** — create one curated order-level table for the final dashboard.
+6. **Interpretation** — compare model stages, evaluate lift / capture rate, and test normalized FP/FN cost assumptions.
+7. **Robustness checks** — compare K-Means with DBSCAN and inspect the high-risk noise group.
+8. **Power BI export** — create one curated order-level table for the final dashboard.
 
 ## Repository structure
 
@@ -137,7 +152,7 @@ I am keeping the `.pbix` and dashboard screenshot as the final project step rath
 
 Raw Olist CSVs are not committed. The processed master table is also kept local because of its size. `data/README.md` lists the expected raw files and folder structure.
 
-The repository includes compact model metrics, validation-search results, lift / capture summaries, feature importance, and small samples of the highest-risk scored orders. Running notebooks 03 and 04 recreates the full test-set prediction files locally.
+The repository includes compact model metrics, validation-search results, lift / capture and capacity summaries, normalized cost-sensitivity outputs, clustering-robustness results, feature importance, and small samples of the highest-risk scored orders. Running notebooks 03 and 04 recreates the full test-set prediction files locally.
 
 ## Limitations
 
