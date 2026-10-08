@@ -1,0 +1,11 @@
+feature,importance
+late_days,15.45
+delivery_vs_estimate_days,11.53
+n_items,9.93
+delivery_time_days,8.53
+primary_seller_city,4.74
+primary_product_category,4.15
+carrier_pickup_delay_days,3.65
+customer_city,3.57
+max_product_volume_cm3,3.25
+shipping_transit_days,3.10
