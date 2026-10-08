@@ -1,6 +1,6 @@
 # Data and Reproducibility
 
-This project uses the public **Olist Brazilian E-Commerce** dataset and keeps a single, explicit data lineage from raw source tables to modeling and Power BI.
+This personal portfolio project uses the public **Olist Brazilian E-Commerce** dataset and keeps one explicit data lineage from raw relational tables through modeling and Power BI.
 
 ## Folder contract
 
@@ -15,7 +15,7 @@ data/
 
 `data/processed/master_orders_clean_v2.csv` is the single source of truth for clustering, placement-stage modeling, delivery-stage modeling, interpretation, and the Power BI export.
 
-The supervised-learning unit is **one order**. One-to-many source tables such as items and payments are aggregated before merging so each order contributes one observation and one target.
+I rebuild the analytical table at **one row per order**. One-to-many source tables such as items and payments are aggregated before merging so each order contributes one observation and one target.
 
 - `review_bad = 1` for review scores 1–2
 - `review_bad = 0` for review scores 3–5
@@ -50,11 +50,13 @@ data/processed/master_orders_clean_v2.csv
 
 ## Local files
 
-The large processed master table is not committed through the portfolio repository. To run the notebooks locally, place the following files under `data/processed/`:
+The processed master table is kept local because of its size. To run the notebooks, place these files under `data/processed/`:
 
 - `master_orders_clean_v2.csv`
 - `shared_train_test_split.csv`
 - `data_quality_audit_v2.csv`
 - `feature_availability_matrix_v2.csv`
 
-Raw Olist CSVs belong only in `data/raw/`.
+If rebuilding from source, place the original Olist CSVs under `data/raw/` and run `notebooks/01_data_join_and_clean.ipynb`.
+
+The important design rule is that downstream notebooks do not read separate ad hoc copies of the data. They all reference the same canonical processed table.
