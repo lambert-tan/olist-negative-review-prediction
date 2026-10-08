@@ -22,7 +22,6 @@ Place the following source files under `data/raw/` before running notebook 01:
 - `olist_products_dataset.csv`
 - `olist_sellers_dataset.csv`
 - `olist_customers_dataset.csv`
-- `olist_geolocation_dataset.csv`
 - `product_category_name_translation.csv`
 
 The raw files are not committed to this repository.
