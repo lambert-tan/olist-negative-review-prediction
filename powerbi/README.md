@@ -1,16 +1,16 @@
 # Power BI Dashboard
 
-Power BI is the deployment layer of this project. It does not connect to raw Olist tables and does not recreate the machine-learning pipeline.
+This is the business-facing deployment layer of my Olist customer review risk project. I keep the Power BI report downstream of the Python workflow so the dashboard does not recreate data engineering or model logic in a second place.
 
 ## Data source
 
-Use only:
+Power BI reads only:
 
 `data/powerbi/powerbi_order_risk.csv`
 
-Generate it by running `notebooks/06_powerbi_export.ipynb` after the processed master table is available locally.
+I generate that file with `notebooks/06_powerbi_export.ipynb` after the canonical processed master table is available locally.
 
-## Recommended pages
+## Report design
 
 ### 1. Executive Risk Overview
 - Total Orders
@@ -25,10 +25,10 @@ Generate it by running `notebooks/06_powerbi_export.ipynb` after the processed m
 - Product-category comparison
 - State comparison
 - Persona comparison
-- Reference the CatBoost feature-importance artifact for model interpretation
+- CatBoost feature importance as model context
 
 ### 3. Customer Recovery Queue
-Once order-level prediction probabilities are available, show:
+Once I persist order-level model probabilities, this page will show:
 - Order ID
 - Delivery risk probability
 - Risk band
@@ -39,7 +39,7 @@ Once order-level prediction probabilities are available, show:
 - State
 - Persona
 
-Sort by model risk descending so the page functions as an operational prioritization view rather than a decorative report.
+The queue should be sorted by model risk descending so the report supports prioritization rather than serving as a decorative dashboard.
 
 ## Power BI skills demonstrated
 
@@ -52,4 +52,4 @@ Sort by model risk descending so the page functions as an operational prioritiza
 - Conditional formatting
 - Business-oriented dashboard design
 
-The final `.pbix` file and a dashboard screenshot can be added to this folder / `assets/` after the report is built.
+The final `.pbix` file and dashboard screenshot will live in this folder / `assets/` once the report is complete.
