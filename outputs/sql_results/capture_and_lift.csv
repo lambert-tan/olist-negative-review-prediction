@@ -1,0 +1,21 @@
+stage,risk_decile,top_share_of_orders,share_of_negatives_captured,cumulative_lift
+At Delivery,1,0.1,0.4364,4.36
+At Delivery,2,0.2,0.5795,2.9
+At Delivery,3,0.3,0.6638,2.21
+At Delivery,4,0.4,0.7319,1.83
+At Delivery,5,0.5,0.7971,1.59
+At Delivery,6,0.6,0.8435,1.41
+At Delivery,7,0.7,0.8839,1.26
+At Delivery,8,0.8,0.9279,1.16
+At Delivery,9,0.9,0.9703,1.08
+At Delivery,10,1.0,1.0,1.0
+At Placement,1,0.1,0.2311,2.31
+At Placement,2,0.2,0.3773,1.89
+At Placement,3,0.3,0.5004,1.67
+At Placement,4,0.4,0.6031,1.51
+At Placement,5,0.5,0.6854,1.37
+At Placement,6,0.6,0.7681,1.28
+At Placement,7,0.7,0.8403,1.2
+At Placement,8,0.8,0.8981,1.12
+At Placement,9,0.9,0.9609,1.07
+At Placement,10,1.0,1.0,1.0
