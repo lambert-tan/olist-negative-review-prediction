@@ -1,217 +1,56 @@
 # Predicting Negative Customer Reviews in Brazilian E-Commerce
 
-> **How early can an e-commerce platform identify an order that is likely to result in a negative customer review?**
+A customer service team can flag an order as soon as it is placed, or wait until delivery and use the shipping history. I compared those two decisions on **95,824 delivered Olist orders** with observed reviews. Of those, 12,272 (12.8%) received one or two stars.
 
-**Python · LightGBM · CatBoost · Clustering · Power BI · Customer Analytics**
+## From transactions to one row per order
 
-This project uses the public Olist Brazilian E-Commerce dataset to study when useful negative-review risk signals appear during the order lifecycle. I built the analysis from the order-level data pipeline through modeling and interpretation, then added a Power BI layer for business-facing use.
+Items, payments and reviews can each have several rows per order. I aggregated items and payments separately and selected the latest review before joining the tables. This prevents a multi-item order from counting several times. The placement model uses purchase, basket, payment and geographic information. The delivery model can also use transit time and deviation from the promised date.
 
-The main comparison is between an **at-placement** model, which has more time to support early action, and an **at-delivery** model, which has stronger fulfillment information.
+Both models use the same stratified holdout of 19,165 orders. Preprocessing is fitted on training data, and a separate validation subset determines model settings and classification thresholds. The comparison measures the two workflows as implemented. Both the algorithm and the available features differ between stages.
 
-[SQL pipeline and scorecard queries](#sql-pipeline-duckdb)
-
-## Results
-
-**95,824 delivered orders · 12.8% negative reviews (1–2 stars)**
+## What changes at delivery?
 
 | Decision point | Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
 |---|---|---:|---:|---:|---:|---:|
 | At placement | LightGBM | 0.219 | **0.473** | 0.299 | 0.658 | 0.233 |
 | At delivery | CatBoost | **0.565** | 0.431 | **0.489** | **0.775** | **0.496** |
 
-The placement model works better as an early screening tool because it keeps more recall. The delivery model is much more selective and ranks negative-review cases more effectively.
+At the selected thresholds, the placement model catches more negative reviews but generates more false alarms. Once an order is delivered, the CatBoost score gives the service team a more selective queue. [Test metrics](outputs/model_metrics/placement_vs_delivery.csv)
 
-<p align="center"><img src="assets/model_comparison.svg" width="900" alt="Placement versus delivery model performance"></p>
+| Share of test orders followed up, highest delivery score first | Share of all negative reviews captured |
+|---|---:|
+| 5% | 29.8% |
+| 10% | 43.6% |
+| 20% | 57.9% |
 
-## Risk concentration
+With capacity for 1,917 orders (10%), the team would reach a group in which **55.9%** left a negative review. Expanding coverage to 20% would capture another 14.3 percentage points of all negative reviews. These figures measure whom the team could reach. Whether contact improves customer outcomes requires an intervention test. [Capacity analysis](outputs/model_metrics/capacity_curve.csv)
 
-The delivery score is useful even before choosing a single operating threshold. On the held-out test set:
+![Placement and delivery model performance](assets/model_comparison.svg)
 
-- the top **5%** of delivery-risk scores contain about **29.8%** of all negative reviews;
-- the top **10%** contain about **43.6%**;
-- the top **20%** contain about **57.9%**.
+## Validation and interpretation
 
-The top 10% group has a negative-review rate of about **55.9%**, compared with 12.8% overall. That is roughly **4.4× lift**.
+The delivery score’s negative-review rate falls from 55.9% in the highest-risk decile to 3.8% in the lowest. A random holdout leaves performance on later orders and probability calibration untested. The separate clustering analysis found elevated negative-review rates for long-wait and multi-item orders. The clusters overlap (silhouette 0.204), so they are descriptive profiles. [Validation report](docs/model_validation_report.md) · [Order profiles](outputs/interpretation/cluster_profile.csv)
 
-This makes the score suitable for testing a capacity-constrained service-recovery workflow, where only a limited number of orders can be reviewed or contacted.
-
-## Scorecard-style validation
-
-I also reviewed both scores the way a credit or fraud scorecard would be reviewed. The delivery-stage model reaches **Gini 0.55** and **KS 0.44** (decile-level), with the negative-review rate falling from 55.9% in the riskiest decile to 3.8% in the safest. Test ROC-AUC is slightly above the best validation result, so the hyperparameter search did not overfit.
-
-| | Gini | KS (decile) | Validation → test AUC |
-|---|---:|---:|---:|
-| At placement | 0.316 | 0.233 | 0.654 → 0.658 |
-| At delivery | **0.550** | **0.435** | 0.755 → 0.775 |
-
-Full write-up, including rank-ordering checks and limitations: [`docs/model_validation_report.md`](docs/model_validation_report.md). Reproduce with `python scripts/validation_metrics.py`.
-
-## Decision policy
-
-I also look at the model as a queueing and decision problem instead of treating one classification threshold as the only output. On the held-out test set, reviewing the highest-risk 5% of orders captures about 29.8% of negative reviews; expanding capacity to 10% raises capture to 43.6%. The marginal gain then starts to flatten as lower-risk cases enter the queue.
-
-To make the early-versus-late trade-off explicit, I use a normalized error-cost sensitivity analysis. I set the cost of one false positive to 1 unit and vary the relative cost of a false negative. At the validation-selected thresholds, the placement model produces more false positives but slightly fewer false negatives. The break-even point is about **32.7:1**: only above that false-negative/false-positive cost ratio does the placement-stage policy become cheaper than the delivery-stage policy.
-
-I keep this in normalized units because the dataset does not contain Olist's actual service, retention, or reputation costs. The purpose is to show what economic assumption would be required to justify earlier intervention, not to invent a monetary ROI.
-
-## Business workflow
-
-I use the two model stages differently:
-
-**Order placed → early risk screening → fulfillment → delivery-stage risk update → service recovery**
-
-At placement, the score can support lower-cost monitoring or proactive communication. After delivery, the stronger CatBoost score can be used to prioritize a smaller set of higher-risk cases.
-
-<p align="center"><img src="assets/business_workflow.svg" width="900" alt="Two-stage review risk workflow"></p>
-
-The models estimate risk, not the causal effect of an intervention. A production test would still need to measure whether contacting flagged customers improves review outcomes, retention, or unit economics.
-
-## Order personas
-
-K-Means is used on the same 95,824-order cohort to provide a descriptive view of recurring order patterns.
-
-| Persona | Orders | Share | Negative-review rate | What distinguishes it |
-|---|---:|---:|---:|---|
-| Long Wait | 16,705 | 17.4% | **29.1%** | ~25.3 delivery days; 39.5% delivered late |
-| Multi-Item Basket | 8,306 | 8.7% | **25.9%** | ~2.5 items; high freight; generally early |
-| Big-Ticket Planner | 26,692 | 27.9% | 8.2% | higher-value, heavier orders; ~4.9 installments |
-| Quick Small Buy | 44,121 | 46.0% | 6.9% | low-value, light orders; ~8.3 delivery days |
-
-Review outcome is not used to fit the clusters. The silhouette score is about **0.204**, so I use these as descriptive profiles rather than sharply separated natural groups.
-
-<p align="center"><img src="assets/persona_risk.svg" width="820" alt="Negative review rate across order personas"></p>
-
-## Clustering robustness
-
-I use DBSCAN as a second clustering check because it does not require the number of groups to be fixed in advance. Using the same standardized clustering variables, `eps=1.0` and `min_samples=20` produce a large core cluster plus smaller groups and about **3.6% noise**. Agreement with the four K-Means personas is low (ARI ≈ **0.159**).
-
-The disagreement is useful. The DBSCAN noise group has a negative-review rate of about **32.9%**, which makes it a useful outlier signal, but the density-based solution is much harder to translate into a small set of stable business personas. I therefore keep K-Means for segmentation and treat DBSCAN as an outlier-oriented robustness check.
-
-## Final delivery-stage model
-
-CatBoost gives the strongest delivery-stage result. The leading features are mostly related to fulfillment timing and order complexity.
-
-<p align="center"><img src="assets/feature_importance.svg" width="900" alt="CatBoost feature importance"></p>
-
-Feature importance is used as a predictive diagnostic. It does not show that changing one feature would directly change a customer's review.
-
-## Data and leakage controls
-
-The modeling unit is one order.
-
-- `review_bad = 1` for review scores 1–2 and `0` for scores 3–5.
-- One-to-many tables such as items and payments are aggregated before joining to the order-level target.
-- Review score and review timestamps are never used as predictors.
-- Delivery outcomes are excluded from the placement model.
-- Numeric imputation and categorical handling are learned from training data only.
-- Unseen placement-stage categories are mapped to an explicit `__OTHER__` level.
-- Model settings and classification thresholds are selected on validation data.
-- The frozen test set is used only for final evaluation.
-
-Because the positive class is imbalanced, I report **PR-AUC** in addition to ROC-AUC, F1, precision and recall.
-
-## Workflow
-
-1. **Data join and cleaning** — combine the relational Olist tables into one row per delivered order.
-2. **Feature engineering** — separate placement-stage and delivery-stage information.
-3. **Clustering** — create four descriptive order personas.
-4. **At-placement modeling** — run a small LightGBM validation search and save test-set scores.
-5. **At-delivery modeling** — run a small CatBoost validation search, save scores and feature importance.
-6. **Interpretation** — compare model stages, evaluate lift / capture rate, and test normalized FP/FN cost assumptions.
-7. **Robustness checks** — compare K-Means with DBSCAN and inspect the high-risk noise group.
-8. **Power BI export** — create one curated order-level table for the final dashboard.
+At the selected thresholds, early screening has lower estimated error cost only if a missed negative review costs more than 32.7 false alarms. This is a sensitivity calculation using the test confusion counts. Actual service costs and the benefit of earlier contact are unknown. [Cost calculation](outputs/model_metrics/cost_breakeven.csv)
 
 ## SQL pipeline (DuckDB)
 
-The data preparation and the risk analysis are also written as SQL, so the same logic can be read, queried and audited without opening a notebook. DuckDB runs the files locally; there is no server to set up.
-
-| File | What it does |
+| Step | Purpose |
 |---|---|
-| [`sql/01_build_master_orders.sql`](sql/01_build_master_orders.sql) | Joins the 8 raw tables into one row per delivered order. Items and payments are aggregated *before* joining so the review target is never duplicated. Uses CTEs and `ROW_NUMBER()` to keep the latest review, the highest-priced item and the largest payment type per order. |
-| [`sql/02_quality_checks.sql`](sql/02_quality_checks.sql) | 13 checks: one row per order, target definition, item and payment totals reconciled to the raw tables, timestamp sanity, and (optionally) the known cohort size of 95,824 orders / 12,272 negative reviews. The run fails if any check fails. |
-| [`sql/03_risk_analysis.sql`](sql/03_risk_analysis.sql) | Negative-review rate by delivery timing, state, product category, order complexity and month (window functions, `RANK`, `LAG`, moving average), plus a z-score screen for sellers whose rate is above the platform average. |
-| [`sql/04_scorecard_metrics.sql`](sql/04_scorecard_metrics.sql) | Gini, KS, capture / lift and rank-ordering from the committed decile table, using cumulative-share window functions. Needs no raw data. |
+| [Build the order table](sql/01_build_master_orders.sql) | Aggregate eight source tables to order level and derive features. |
+| [Check data quality](sql/02_quality_checks.sql) | Verify unique orders, review labels, timestamps and reconciliation to source totals. |
+| [Explore review risk](sql/03_risk_analysis.sql) | Compare review rates by delivery timing, geography, category, seller and month. |
+| [Calculate scorecard metrics](sql/04_scorecard_metrics.sql) | Use committed model outputs to calculate Gini, decile KS, capture and lift. |
+
+## Reproduce the analysis
+
+The [executed walkthrough](notebooks/olist_negative_review_end_to_end.ipynb) summarizes the committed results. For a full rebuild, follow the [data instructions](data/README.md) and run notebooks 01–06 in order. Notebook 06 prepares the [planned Power BI report](powerbi/README.md).
 
 ```bash
 pip install -r requirements.txt
-python scripts/run_sql_pipeline.py --check-known-totals   # steps 01-04 on the raw Olist CSVs
-python scripts/run_sql_pipeline.py --steps 04              # scorecard metrics only, no raw data needed
-pytest tests/ -q                                            # SQL-vs-notebook parity tests
+python scripts/run_sql_pipeline.py --steps 04
+python scripts/validation_metrics.py
+pytest tests/ -q
 ```
 
-Results are written to `outputs/sql_results/`. The scorecard results (step 04) are committed; steps 02-03 need the raw data and are produced when you run them.
-
-**How it was checked.** The raw data is not in the repo, so `tests/test_sql_pipeline.py` builds a synthetic Olist-shaped dataset with deliberate edge cases (duplicate and tied reviews, missing timestamps, negative carrier intervals, unknown categories, orders with no items or payments) and requires the SQL output to match the notebook's own pandas code column by column. Step 04 is checked against `outputs/model_metrics/scorecard_metrics.csv` (Gini 0.316 / 0.550, KS 0.233 / 0.435). `--check-known-totals` asserts 95,824 orders and 12,272 negative reviews when run on the real files.
-
-**Scope.** The stratified train/test split stays in notebook 01 (`random_state=42`) so the SQL and notebook pipelines share one split, and all modelling stays in Python. SQL reads timestamps strictly, so a malformed timestamp in a raw file raises an error instead of silently becoming missing, as it would with pandas `errors='coerce'`.
-
-## Repository structure
-
-```text
-olist-negative-review-prediction/
-├── assets/
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── powerbi/
-├── notebooks/
-│   ├── 01_data_join_and_clean.ipynb
-│   ├── 02_clustering.ipynb
-│   ├── 03_at_placement_model.ipynb
-│   ├── 04_at_delivery_model.ipynb
-│   ├── 05_model_interpretation.ipynb
-│   ├── 06_powerbi_export.ipynb
-│   └── olist_negative_review_end_to_end.ipynb
-├── outputs/
-│   ├── model_metrics/
-│   ├── interpretation/
-│   ├── predictions/
-│   └── sql_results/
-├── docs/
-│   └── model_validation_report.md
-├── powerbi/
-├── scripts/
-│   ├── validation_metrics.py
-│   └── run_sql_pipeline.py
-├── sql/
-│   ├── 01_build_master_orders.sql
-│   ├── 02_quality_checks.sql
-│   ├── 03_risk_analysis.sql
-│   └── 04_scorecard_metrics.sql
-├── tests/
-│   └── test_sql_pipeline.py
-├── requirements.txt
-└── README.md
-```
-
-The compact end-to-end notebook is saved with executed outputs so the main results can be reviewed directly on GitHub.
-
-## Power BI
-
-The Power BI report will use only `data/powerbi/powerbi_order_risk.csv`, which is generated by notebook 06 from the same processed data and model outputs used in Python.
-
-The planned report has three pages:
-
-- **Executive Risk Overview**
-- **Risk Drivers**
-- **Customer Recovery Queue**
-
-I am keeping the `.pbix` and dashboard screenshot as the final project step rather than adding a placeholder report.
-
-## Reproducibility
-
-Raw Olist CSVs are not committed. The processed master table is also kept local because of its size. `data/README.md` lists the expected raw files and folder structure.
-
-The repository includes compact model metrics, validation-search results, lift / capture and capacity summaries, normalized cost-sensitivity outputs, clustering-robustness results, feature importance, and small samples of the highest-risk scored orders. Running notebooks 03 and 04 recreates the full test-set prediction files locally.
-
-## Limitations
-
-The analysis includes only delivered orders with observed reviews. Review score identifies dissatisfaction but does not reveal its exact cause. The validation search is intentionally small, and the intervention value of the model has not been tested experimentally.
-
-## Tools
-
-Python · SQL (DuckDB) · pandas · NumPy · scikit-learn · LightGBM · CatBoost · Matplotlib · Power BI · Power Query · DAX
-
----
-
-**Lambert Tan**
+These commands use committed outputs or synthetic test data. With the eight raw CSVs in place, run `python scripts/run_sql_pipeline.py --check-known-totals` for all four SQL steps.
