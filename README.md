@@ -119,6 +119,30 @@ Because the positive class is imbalanced, I report **PR-AUC** in addition to ROC
 7. **Robustness checks** — compare K-Means with DBSCAN and inspect the high-risk noise group.
 8. **Power BI export** — create one curated order-level table for the final dashboard.
 
+## SQL pipeline (DuckDB)
+
+The data preparation and the risk analysis are also written as SQL, so the same logic can be read, queried and audited without opening a notebook. DuckDB runs the files locally; there is no server to set up.
+
+| File | What it does |
+|---|---|
+| [`sql/01_build_master_orders.sql`](sql/01_build_master_orders.sql) | Joins the 8 raw tables into one row per delivered order. Items and payments are aggregated *before* joining so the review target is never duplicated. Uses CTEs and `ROW_NUMBER()` to keep the latest review, the highest-priced item and the largest payment type per order. |
+| [`sql/02_quality_checks.sql`](sql/02_quality_checks.sql) | 13 checks: one row per order, target definition, item and payment totals reconciled to the raw tables, timestamp sanity, and (optionally) the known cohort size of 95,824 orders / 12,272 negative reviews. The run fails if any check fails. |
+| [`sql/03_risk_analysis.sql`](sql/03_risk_analysis.sql) | Negative-review rate by delivery timing, state, product category, order complexity and month (window functions, `RANK`, `LAG`, moving average), plus a z-score screen for sellers whose rate is above the platform average. |
+| [`sql/04_scorecard_metrics.sql`](sql/04_scorecard_metrics.sql) | Gini, KS, capture / lift and rank-ordering from the committed decile table, using cumulative-share window functions. Needs no raw data. |
+
+```bash
+pip install -r requirements.txt
+python scripts/run_sql_pipeline.py --check-known-totals   # steps 01-04 on the raw Olist CSVs
+python scripts/run_sql_pipeline.py --steps 04              # scorecard metrics only, no raw data needed
+pytest tests/ -q                                            # SQL-vs-notebook parity tests
+```
+
+Results are written to `outputs/sql_results/`. The scorecard results (step 04) are committed; steps 02-03 need the raw data and are produced when you run them.
+
+**How it was checked.** The raw data is not in the repo, so `tests/test_sql_pipeline.py` builds a synthetic Olist-shaped dataset with deliberate edge cases (duplicate and tied reviews, missing timestamps, negative carrier intervals, unknown categories, orders with no items or payments) and requires the SQL output to match the notebook's own pandas code column by column. Step 04 is checked against `outputs/model_metrics/scorecard_metrics.csv` (Gini 0.316 / 0.550, KS 0.233 / 0.435). `--check-known-totals` asserts 95,824 orders and 12,272 negative reviews when run on the real files.
+
+**Scope.** The stratified train/test split stays in notebook 01 (`random_state=42`) so the SQL and notebook pipelines share one split, and all modelling stays in Python. SQL reads timestamps strictly, so a malformed timestamp in a raw file raises an error instead of silently becoming missing, as it would with pandas `errors='coerce'`.
+
 ## Repository structure
 
 ```text
@@ -139,12 +163,21 @@ olist-negative-review-prediction/
 ├── outputs/
 │   ├── model_metrics/
 │   ├── interpretation/
-│   └── predictions/
+│   ├── predictions/
+│   └── sql_results/
 ├── docs/
 │   └── model_validation_report.md
 ├── powerbi/
 ├── scripts/
-│   └── validation_metrics.py
+│   ├── validation_metrics.py
+│   └── run_sql_pipeline.py
+├── sql/
+│   ├── 01_build_master_orders.sql
+│   ├── 02_quality_checks.sql
+│   ├── 03_risk_analysis.sql
+│   └── 04_scorecard_metrics.sql
+├── tests/
+│   └── test_sql_pipeline.py
 ├── requirements.txt
 └── README.md
 ```
@@ -175,7 +208,7 @@ The analysis includes only delivered orders with observed reviews. Review score 
 
 ## Tools
 
-Python · pandas · NumPy · scikit-learn · LightGBM · CatBoost · Matplotlib · Power BI · Power Query · DAX
+Python · SQL (DuckDB) · pandas · NumPy · scikit-learn · LightGBM · CatBoost · Matplotlib · Power BI · Power Query · DAX
 
 ---
 
