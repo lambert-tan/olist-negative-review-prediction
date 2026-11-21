@@ -33,6 +33,17 @@ The top 10% group has a negative-review rate of about **55.9%**, compared with 1
 
 This makes the score suitable for testing a capacity-constrained service-recovery workflow, where only a limited number of orders can be reviewed or contacted.
 
+## Scorecard-style validation
+
+I also reviewed both scores the way a credit or fraud scorecard would be reviewed. The delivery-stage model reaches **Gini 0.55** and **KS 0.44** (decile-level), with the negative-review rate falling from 55.9% in the riskiest decile to 3.8% in the safest. Test ROC-AUC is slightly above the best validation result, so the hyperparameter search did not overfit.
+
+| | Gini | KS (decile) | Validation → test AUC |
+|---|---:|---:|---:|
+| At placement | 0.316 | 0.233 | 0.654 → 0.658 |
+| At delivery | **0.550** | **0.435** | 0.755 → 0.775 |
+
+Full write-up, including rank-ordering checks and limitations: [`docs/model_validation_report.md`](docs/model_validation_report.md). Reproduce with `python scripts/validation_metrics.py`.
+
 ## Decision policy
 
 I also look at the model as a queueing and decision problem instead of treating one classification threshold as the only output. On the held-out test set, reviewing the highest-risk 5% of orders captures about 29.8% of negative reviews; expanding capacity to 10% raises capture to 43.6%. The marginal gain then starts to flatten as lower-risk cases enter the queue.
@@ -129,7 +140,11 @@ olist-negative-review-prediction/
 │   ├── model_metrics/
 │   ├── interpretation/
 │   └── predictions/
+├── docs/
+│   └── model_validation_report.md
 ├── powerbi/
+├── scripts/
+│   └── validation_metrics.py
 ├── requirements.txt
 └── README.md
 ```
