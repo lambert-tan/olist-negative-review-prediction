@@ -1,6 +1,6 @@
 # Power BI Dashboard
 
-The Power BI report is the final project step. It uses one curated export from the Python workflow and does not repeat the raw-data joins or model training.
+The Power BI report is the final project step. The design uses one curated export from the Python workflow and does not repeat the raw-data joins or model training.
 
 ## Data source
 
@@ -8,7 +8,7 @@ Use:
 
 `data/powerbi/powerbi_order_risk.csv`
 
-Generate the file by running notebooks 02–04 first, then notebook 06.
+Generate the file by running notebook 01 to build the order table, notebooks 02–04 to generate personas and scores, and notebook 06 to export the merged data.
 
 The export includes:
 
@@ -61,7 +61,7 @@ The queue should be sorted by delivery-model probability so it functions as a pr
 
 A capacity view can use the top-risk flags or a What-if parameter to show how review capacity changes the share of negative reviews captured. The Python analysis already provides benchmark points at 5%, 10% and 20% capacity.
 
-## Power BI skills shown
+## Planned report features
 
 - Power Query for data typing and light transformation
 - explicit Date table
