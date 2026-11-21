@@ -29,11 +29,23 @@ The first 1,917 slots in the delivery queue contain 1,071 negative reviews. The 
 
 ![Placement and delivery model performance](assets/model_comparison.svg)
 
-## Validation and interpretation
+## What the longer orders tell us
 
-The delivery score’s negative-review rate falls from 55.9% in the highest-risk decile to 3.8% in the lowest. A random holdout leaves performance on later orders and probability calibration untested. The separate clustering analysis found elevated negative-review rates for long-wait and multi-item orders. The clusters overlap (silhouette 0.204), so they are descriptive profiles. [Validation report](docs/model_validation_report.md) · [Order profiles](outputs/interpretation/cluster_profile.csv)
+Across the full cohort, the Long Wait group averaged 25.3 days to delivery. Some 39.5% of those orders were late and 29.1% received a negative review. Multi-Item Basket orders had a nearly comparable negative-review rate of 25.9%, yet only **3.2%** arrived late. A rule that flags late deliveries would overlook many dissatisfied customers in that second group. It would be worth reviewing multi-item complaints for missing items, split shipments or other fulfilment problems. The review label alone cannot distinguish among those explanations. [Cluster sizes, lateness and review outcomes](outputs/interpretation/cluster_profile.csv)
+
+I used K-Means to describe these patterns after the order lifecycle was complete. A second method, DBSCAN, assigned 3.6% of orders to noise and agreed weakly with the K-Means labels (adjusted Rand index 0.159). I would use the profiles to generate hypotheses for service audits. Assigning incoming orders to those groups for early outreach would require a separate design because the clustering inputs include delivery outcomes. [Clustering notebook](notebooks/02_clustering.ipynb) · [Robustness results](outputs/interpretation/dbscan_robustness.csv)
+
+## How much confidence to place in the ranking
+
+The delivery score’s negative-review rate falls from 55.9% in the highest-risk decile to 3.8% in the lowest. A random holdout leaves performance on later orders and probability calibration untested. The delivery model’s decile-level KS was 0.435, compared with 0.233 at placement. Late days and time relative to the promised date ranked highly in the delivery model, alongside item count. Those diagnostics help explain which cases to inspect. Quantifying the incremental value of shipping data would require the same algorithm and shared feature set at both stages, followed by a comparison with delivery features added. [Validation report](docs/model_validation_report.md) · [Order profiles](outputs/interpretation/cluster_profile.csv)
 
 A separate comparison uses each model’s validation-selected threshold and lets queue size vary. Early screening misses 102 fewer negative reviews but adds 3,332 false alarms. Its estimated error cost is lower only if one miss costs more than 32.7 false alarms. Olist’s actual costs are unknown. [Cost calculation](outputs/model_metrics/cost_breakeven.csv)
+
+## Designing a service pilot
+
+The historical rankings support testing a limited follow-up queue. Before scheduling agents, I would replay the policy on later order months and use timestamps to exclude customers who had already reviewed their order before an agent could contact them. The study includes only reviewed orders; a live queue also contains customers who would never submit a review.
+
+Within eligible high-risk orders, randomly assign the proposed contact or usual service. Track resolution within a fixed window, time spent per case and subsequent review participation alongside negative ratings. Outreach can change who writes a review, which makes the percentage of negative ratings among reviewers alone an ambiguous success measure. The business case depends on additional issues resolved per agent-hour. The retrospective capture figures give a starting queue size for that experiment.
 
 ## SQL pipeline (DuckDB)
 
@@ -46,7 +58,7 @@ A separate comparison uses each model’s validation-selected threshold and lets
 
 ## Reproduce the analysis
 
-The [executed walkthrough](notebooks/olist_negative_review_end_to_end.ipynb) summarizes the committed results. For a full rebuild, follow the [data instructions](data/README.md) and run notebooks 01–06 in order. Notebook 06 prepares the [planned Power BI report](powerbi/README.md).
+The Python notebooks create the cohort and split, fit the placement and delivery models, and evaluate risk scores. The DuckDB scripts reproduce order preparation and calculate descriptive and scorecard results. The [executed walkthrough](notebooks/olist_negative_review_end_to_end.ipynb) summarizes the committed results. For a full rebuild, follow the [data instructions](data/README.md) and run notebooks 01–06 in order. Notebook 06 prepares the [planned Power BI report](powerbi/README.md).
 
 ```bash
 pip install -r requirements.txt
