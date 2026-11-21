@@ -1,16 +1,18 @@
-# Predicting Negative Customer Reviews in Brazilian E-Commerce
+# 🛒 Olist customer reviews: which orders should a service team follow up?
 
-If a service team has 1,917 follow-up slots, which orders should it choose? On the same held-out sample, the placement ranking identified **567 orders** that received a one- or two-star review. The delivery ranking identified **1,071** with the same capacity. Earlier contact still has a potential advantage: a team may be able to resolve a shipping problem while an order is in transit. The data record review outcomes, so they let me evaluate targeting accuracy but cannot establish the value of contacting a customer early. [Held-out deciles](outputs/predictions/score_deciles.csv)
+Suppose the team can follow up on one in ten orders. I compared two ways to choose that queue on the same 19,165 held-out orders. With **1,917 slots**, the model used at purchase picked up **567** orders that received a one- or two-star review. At delivery, the model picked up **1,071**. Waiting improved targeting, although it also gave the team less time to resolve a problem in transit. [Compare both queues](outputs/predictions/score_deciles.csv)
 
-The study covers 95,824 delivered Olist orders with observed reviews. Of these, 12,272 (12.8%) received one or two stars. Cancelled orders and customers who never reviewed a purchase fall outside this sample.
+The study covers 95,824 delivered Brazilian e-commerce orders with observed reviews. Of these, 12,272 (12.8%) received one or two stars. The data capture who left a negative review. Measuring whether outreach changes that outcome would require a service pilot.
+
+**Explore the analysis** · [Executed Python walkthrough](notebooks/olist_negative_review_end_to_end.ipynb) · [DuckDB order joins](sql/01_build_master_orders.sql) · [Model validation report](docs/model_validation_report.md)
 
 ## From transactions to one row per order
 
-Items, payments and reviews can each have several rows per order. I aggregated items and payments separately and selected the latest review before joining the tables. This prevents a multi-item order from counting several times. The placement model uses purchase, basket, payment and geographic information. The delivery model can also use transit time and deviation from the promised date.
+Items, payments and reviews can each have several rows per order. I aggregated items and payments separately and selected the latest review before joining the tables. This prevents a multi-item order from counting several times. A basket with three items and two payment records could otherwise produce six joined rows for a single review. I also separated the inputs by decision time. Basket contents, payment and location are available at purchase. Actual transit time and lateness enter only at delivery. [Data preparation notebook](notebooks/01_data_join_and_clean.ipynb)
 
 Both models use the same stratified holdout of 19,165 orders. Preprocessing is fitted on training data, and a separate validation subset determines model settings and classification thresholds. The comparison measures the two workflows as implemented. Both the algorithm and the available features differ between stages.
 
-## What changes at delivery?
+## How the two models perform
 
 | Decision point | Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
 |---|---|---:|---:|---:|---:|---:|
@@ -18,6 +20,10 @@ Both models use the same stratified holdout of 19,165 orders. Preprocessing is f
 | At delivery | CatBoost | **0.565** | 0.431 | **0.489** | **0.775** | **0.496** |
 
 At the selected thresholds, the placement model catches more negative reviews but generates more false alarms. Once an order is delivered, the CatBoost score gives the service team a more selective queue. [Test metrics](outputs/model_metrics/placement_vs_delivery.csv)
+
+![Placement and delivery model performance](assets/model_comparison.svg)
+
+## What doubling follow-up capacity would buy
 
 | Share of test orders followed up, highest delivery score first | Share of all negative reviews captured |
 |---|---:|
@@ -27,13 +33,13 @@ At the selected thresholds, the placement model catches more negative reviews bu
 
 The first 1,917 slots in the delivery queue contain 1,071 negative reviews. The next 1,916 slots add 351. That second group has an 18.3% negative-review rate, compared with 55.9% in the first. A manager considering a larger queue should evaluate the cost and likely benefit of contacting that second group. [Capacity analysis](outputs/model_metrics/capacity_curve.csv)
 
-![Placement and delivery model performance](assets/model_comparison.svg)
-
-## What the longer orders tell us
+## Which complaints would a late-delivery rule miss?
 
 Across the full cohort, the Long Wait group averaged 25.3 days to delivery. Some 39.5% of those orders were late and 29.1% received a negative review. Multi-Item Basket orders had a nearly comparable negative-review rate of 25.9%, yet only **3.2%** arrived late. A rule that flags late deliveries would overlook many dissatisfied customers in that second group. It would be worth reviewing multi-item complaints for missing items, split shipments or other fulfilment problems. The review label alone cannot distinguish among those explanations. [Cluster sizes, lateness and review outcomes](outputs/interpretation/cluster_profile.csv)
 
 I used K-Means to describe these patterns after the order lifecycle was complete. A second method, DBSCAN, assigned 3.6% of orders to noise and agreed weakly with the K-Means labels (adjusted Rand index 0.159). I would use the profiles to generate hypotheses for service audits. Assigning incoming orders to those groups for early outreach would require a separate design because the clustering inputs include delivery outcomes. [Clustering notebook](notebooks/02_clustering.ipynb) · [Robustness results](outputs/interpretation/dbscan_robustness.csv)
+
+![Negative-review rates across the four order profiles](assets/persona_risk.svg)
 
 ## How much confidence to place in the ranking
 
