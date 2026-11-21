@@ -4,7 +4,7 @@ The holdout contains 19,165 delivered orders, including 2,454 with a one- or two
 
 | Measure | Placement (LightGBM) | Delivery (CatBoost) |
 |---|---:|---:|
-| Validation ROC-AUC | 0.654 | 0.755 |
+| Highest ROC-AUC in validation search | 0.654 | 0.754 |
 | Test ROC-AUC | 0.658 | 0.775 |
 | Test PR-AUC (average precision) | 0.233 | 0.496 |
 | Gini | 0.316 | 0.550 |

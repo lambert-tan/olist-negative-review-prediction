@@ -17,7 +17,7 @@ Both models use the same stratified holdout of 19,165 orders. Preprocessing is f
 | Decision point | Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
 |---|---|---:|---:|---:|---:|---:|
 | At placement | LightGBM | 0.219 | **0.473** | 0.299 | 0.658 | 0.233 |
-| At delivery | CatBoost | **0.565** | 0.431 | **0.489** | **0.775** | **0.496** |
+| At delivery | CatBoost | **0.545** | 0.445 | **0.490** | **0.775** | **0.496** |
 
 At the selected thresholds, the placement model catches more negative reviews but generates more false alarms. Once an order is delivered, the CatBoost score gives the service team a more selective queue. [Test metrics](outputs/model_metrics/placement_vs_delivery.csv)
 
@@ -45,7 +45,7 @@ I used K-Means to describe these patterns after the order lifecycle was complete
 
 The delivery score’s negative-review rate falls from 55.9% in the highest-risk decile to 3.8% in the lowest. A random holdout leaves performance on later orders and probability calibration untested. The delivery model’s decile-level KS was 0.435, compared with 0.233 at placement. Late days and time relative to the promised date ranked highly in the delivery model, alongside item count. Those diagnostics help explain which cases to inspect. Quantifying the incremental value of shipping data would require the same algorithm and shared feature set at both stages, followed by a comparison with delivery features added. [Validation report](docs/model_validation_report.md) · [Order profiles](outputs/interpretation/cluster_profile.csv)
 
-A separate comparison uses each model’s validation-selected threshold and lets queue size vary. Early screening misses 102 fewer negative reviews but adds 3,332 false alarms. Its estimated error cost is lower only if one miss costs more than 32.7 false alarms. Olist’s actual costs are unknown. [Cost calculation](outputs/model_metrics/cost_breakeven.csv)
+A separate comparison uses each model’s validation-selected threshold and lets queue size vary. Early screening misses 67 fewer negative reviews but adds 3,234 false alarms. Its estimated error cost is lower only if one miss costs more than 48.3 false alarms. Olist’s actual costs are unknown. [Cost calculation](outputs/model_metrics/cost_breakeven.csv)
 
 ## Designing a service pilot
 
@@ -64,7 +64,7 @@ Within eligible high-risk orders, randomly assign the proposed contact or usual 
 
 ## Reproduce the analysis
 
-The Python notebooks create the cohort and split, fit the placement and delivery models, and evaluate risk scores. The DuckDB scripts reproduce order preparation and calculate descriptive and scorecard results. The [executed walkthrough](notebooks/olist_negative_review_end_to_end.ipynb) summarizes the committed results. For a full rebuild, follow the [data instructions](data/README.md) and run notebooks 01–06 in order. Notebook 06 prepares the [planned Power BI report](powerbi/README.md).
+The Python notebooks create the cohort and split, fit the placement and delivery models, and evaluate risk scores. The DuckDB scripts reproduce order preparation and calculate descriptive and scorecard results. The [executed walkthrough](notebooks/olist_negative_review_end_to_end.ipynb) summarizes the committed results. For a full rebuild, follow the [data instructions](data/README.md) and run notebooks 01–06 in order. Notebook 05 rebuilds the metrics and queue from the two prediction files. It rounds the number of slots up and breaks equal scores by order ID. Notebook 06 uses the same ordering to prepare the [planned Power BI report](powerbi/README.md).
 
 ```bash
 pip install -r requirements.txt
