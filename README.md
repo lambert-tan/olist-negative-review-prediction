@@ -1,6 +1,8 @@
 # Predicting Negative Customer Reviews in Brazilian E-Commerce
 
-A customer service team can flag an order as soon as it is placed, or wait until delivery and use the shipping history. I compared those two decisions on **95,824 delivered Olist orders** with observed reviews. Of those, 12,272 (12.8%) received one or two stars.
+If a service team has 1,917 follow-up slots, which orders should it choose? On the same held-out sample, the placement ranking identified **567 orders** that received a one- or two-star review. The delivery ranking identified **1,071** with the same capacity. Earlier contact still has a potential advantage: a team may be able to resolve a shipping problem while an order is in transit. The data record review outcomes, so they let me evaluate targeting accuracy but cannot establish the value of contacting a customer early. [Held-out deciles](outputs/predictions/score_deciles.csv)
+
+The study covers 95,824 delivered Olist orders with observed reviews. Of these, 12,272 (12.8%) received one or two stars. Cancelled orders and customers who never reviewed a purchase fall outside this sample.
 
 ## From transactions to one row per order
 
@@ -23,7 +25,7 @@ At the selected thresholds, the placement model catches more negative reviews bu
 | 10% | 43.6% |
 | 20% | 57.9% |
 
-With capacity for 1,917 orders (10%), the team would reach a group in which **55.9%** left a negative review. Expanding coverage to 20% would capture another 14.3 percentage points of all negative reviews. These figures measure whom the team could reach. Whether contact improves customer outcomes requires an intervention test. [Capacity analysis](outputs/model_metrics/capacity_curve.csv)
+The first 1,917 slots in the delivery queue contain 1,071 negative reviews. The next 1,916 slots add 351. That second group has an 18.3% negative-review rate, compared with 55.9% in the first. A manager considering a larger queue should evaluate the cost and likely benefit of contacting that second group. [Capacity analysis](outputs/model_metrics/capacity_curve.csv)
 
 ![Placement and delivery model performance](assets/model_comparison.svg)
 
@@ -31,7 +33,7 @@ With capacity for 1,917 orders (10%), the team would reach a group in which **55
 
 The delivery score’s negative-review rate falls from 55.9% in the highest-risk decile to 3.8% in the lowest. A random holdout leaves performance on later orders and probability calibration untested. The separate clustering analysis found elevated negative-review rates for long-wait and multi-item orders. The clusters overlap (silhouette 0.204), so they are descriptive profiles. [Validation report](docs/model_validation_report.md) · [Order profiles](outputs/interpretation/cluster_profile.csv)
 
-At the selected thresholds, early screening has lower estimated error cost only if a missed negative review costs more than 32.7 false alarms. This is a sensitivity calculation using the test confusion counts. Actual service costs and the benefit of earlier contact are unknown. [Cost calculation](outputs/model_metrics/cost_breakeven.csv)
+A separate comparison uses each model’s validation-selected threshold and lets queue size vary. Early screening misses 102 fewer negative reviews but adds 3,332 false alarms. Its estimated error cost is lower only if one miss costs more than 32.7 false alarms. Olist’s actual costs are unknown. [Cost calculation](outputs/model_metrics/cost_breakeven.csv)
 
 ## SQL pipeline (DuckDB)
 
