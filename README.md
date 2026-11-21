@@ -8,6 +8,8 @@ This project uses the public Olist Brazilian E-Commerce dataset to study when us
 
 The main comparison is between an **at-placement** model, which has more time to support early action, and an **at-delivery** model, which has stronger fulfillment information.
 
+[SQL pipeline and scorecard queries](#sql-pipeline-duckdb)
+
 ## Results
 
 **95,824 delivered orders · 12.8% negative reviews (1–2 stars)**
